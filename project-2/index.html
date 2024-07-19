@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <h1>ToDo List</h1>
+    <form id="todo-form">
+        <input type="text" id="todo-name" placeholder="Task name" required>
+        <input type="text" id="todo-owner" placeholder="Owner" required>
+        <button type="submit">Add Task</button>
+    </form>
+    <div class="buttons">
+        <button id="show-all">Show All Tasks</button>
+        <button id="show-completed">Show Completed Tasks</button>
+        <button id="mark-all-completed">Mark All as Completed</button>
+    </div>
+
+    <ul id="todo-list"></ul>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/todos';
+
+        async function fetchTodos() {
+            const response = await fetch(API_URL);
+            const todos = await response.json();
+            return todos;
+        }
+
+        async function addTodoItem(name, owner) {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, owner })
+            });
+            const newTodo = await response.json();
+            return newTodo;
+        }
+
+        async function deleteTodoItem(id) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+        }
+
+        async function updateTodoItem(id, data) {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            const updatedTodo = await response.json();
+            return updatedTodo;
+        }
+
+        document.getElementById('show-completed').onclick = async () => {
+            const response = await fetch(`${API_URL}/completed`);
+            const completedTodos = await response.json();
+            renderTodos(completedTodos);
+        };
+
+        document.getElementById('show-all').onclick = async () => {
+            loadTodos();
+        };
+
+        document.getElementById('mark-all-completed').onclick = async () => {
+            await fetch(`${API_URL}/completed`, { method: 'PATCH' });
+            loadTodos();
+        };
+
+        function renderTodos(todos) {
+            const todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.textContent = `${todo.name} (Owner: ${todo.owner})`;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = async () => {
+                    await deleteTodoItem(todo.id);
+                    loadTodos();
+                };
+                li.appendChild(deleteButton);
+                todoList.appendChild(li);
+            });
+        }
+
+        async function loadTodos() {
+            const todos = await fetchTodos();
+            renderTodos(todos);
+        }
+
+        document.getElementById('todo-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('todo-name').value;
+            const owner = document.getElementById('todo-owner').value;
+            await addTodoItem(name, owner);
+            loadTodos();
+        }
+
+        loadTodos();
+    </script>
+</body>
+
+</html>
