@@ -1,6 +1,7 @@
 import React from 'react';
 import PostList from '../components/PostList';
 import PostForm from '../components/PostForm';
+import Header from '../components/Header';
 
 const Home: React.FC = () => {
   return (
